@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Epoxy resin mix ratio calculator — get exact amounts of resin and hardener for your project.">
+<title>Epoxy Calc — Resin Mix Ratio Tool</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --amber: #e8a030;
+    --amber-dim: #a06a18;
+    --amber-glow: rgba(232, 160, 48, 0.12);
+    --text: #e8e0d0;
+    --text-dim: #7a7060;
+    --resin: #f5c842;
+    --hardener: #60c8e8;
+    --green: #5dba80;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.35;
+  }
+
+  /* ─── HERO ─────────────────────────────── */
+  .hero {
+    position: relative;
+    text-align: center;
+    padding: 72px 24px 56px;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(232,160,48,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.45em;
+    color: var(--amber);
+    text-transform: uppercase;
+    border: 1px solid var(--amber-dim);
+    padding: 5px 14px;
+    border-radius: 1px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 14vw, 120px);
+    letter-spacing: 0.06em;
+    line-height: 0.9;
+    color: var(--amber);
+    text-shadow: 0 0 80px rgba(232,160,48,0.35);
+    animation: fadeUp 0.5s 0.08s ease both;
+  }
+
+  .hero-title span { color: var(--text); opacity: 0.2; }
+
+  .hero-sub {
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 14px;
+    animation: fadeUp 0.5s 0.16s ease both;
+  }
+
+  /* ─── MAIN LAYOUT ──────────────────────── */
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* ─── CARD ─────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 28px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .card:nth-child(1) { animation-delay: 0.1s; }
+  .card:nth-child(2) { animation-delay: 0.18s; }
+  .card:nth-child(3) { animation-delay: 0.26s; }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.5em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--amber);
+    border-radius: 50%;
+  }
+
+  /* ─── RATIO SELECTOR ───────────────────── */
+  .ratio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .ratio-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .ratio-btn:hover { border-color: var(--amber-dim); background: var(--amber-glow); }
+  .ratio-btn.active {
+    border-color: var(--amber);
+    background: var(--amber-glow);
+    box-shadow: inset 0 0 0 1px var(--amber), 0 0 24px rgba(232,160,48,0.1);
+  }
+
+  .ratio-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.05em;
+    color: var(--amber);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .ratio-tag {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .ratio-info {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    background: var(--surface2);
+    border-left: 2px solid var(--amber-dim);
+    padding: 10px 14px;
+    letter-spacing: 0.02em;
+  }
+  .ratio-info strong { color: var(--amber); }
+
+  /* ─── INPUT ROW ─────────────────────────── */
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .input-label {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .main-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    padding: 13px 60px 13px 16px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -moz-appearance: textfield;
+  }
+  .main-input::-webkit-inner-spin-button,
+  .main-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .main-input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px var(--amber-glow);
+  }
+  .main-input::placeholder { color: #3a3530; }
+
+  .unit-badge {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  .unit-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 0 14px;
+    outline: none;
+    cursor: pointer;
+    height: 56px;
+    min-width: 72px;
+    transition: border-color 0.15s;
+  }
+  .unit-select:focus { border-color: var(--amber); }
+
+  /* ─── RESULTS ───────────────────────────── */
+  .result-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .result-box {
+    border-radius: 2px;
+    padding: 18px 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-box::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .result-box.resin { background: rgba(245,200,66,0.06); border: 1px solid rgba(245,200,66,0.25); }
+  .result-box.resin::after { background: linear-gradient(90deg, var(--resin), transparent); }
+  .result-box.hardener { background: rgba(96,200,232,0.06); border: 1px solid rgba(96,200,232,0.25); }
+  .result-box.hardener::after { background: linear-gradient(90deg, var(--hardener), transparent); }
+
+  .rb-label {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .result-box.resin .rb-label { color: rgba(245,200,66,0.6); }
+  .result-box.hardener .rb-label { color: rgba(96,200,232,0.6); }
+
+  .rb-part {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .rb-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  .result-box.resin .rb-value { color: var(--resin); }
+  .result-box.hardener .rb-value { color: var(--hardener); }
+
+  .rb-unit {
+    font-size: 13px;
+    opacity: 0.6;
+    margin-left: 3px;
+    vertical-align: middle;
+  }
+
+  .rb-pct {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+    opacity: 0.5;
+  }
+
+  /* Total row */
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .total-lbl { font-size: 10px; letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase; }
+  .total-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px;
+    color: var(--amber);
+    letter-spacing: 0.04em;
+  }
+  .total-val span { font-size: 15px; opacity: 0.5; margin-left: 4px; }
+
+  /* Visual bar */
+  .mix-bar-wrap { margin-bottom: 6px; }
+  .mix-bar {
+    height: 10px;
+    border-radius: 1px;
+    overflow: hidden;
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .bar-resin {
+    background: linear-gradient(90deg, var(--resin), rgba(245,200,66,0.5));
+    transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-hard {
+    background: linear-gradient(90deg, rgba(96,200,232,0.5), var(--hardener));
+    transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .mix-tip {
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border-left: 2px solid var(--green);
+    padding: 10px 14px;
+    line-height: 1.65;
+    letter-spacing: 0.02em;
+  }
+  .mix-tip strong { color: var(--green); }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 28px 0;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+  }
+  .empty-icon { font-size: 36px; display: block; margin-bottom: 10px; opacity: 0.25; }
+
+  /* ─── FOOTER ────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 32px 20px;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: #3a3530;
+    text-transform: uppercase;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── ANIMATIONS ────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .pop { animation: pop 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes pop {
+    from { transform: scale(0.95); opacity: 0.6; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  /* ─── RESPONSIVE ─────────────────────────── */
+  @media (max-width: 400px) {
+    .hero-title { font-size: 64px; }
+    .ratio-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .ratio-num { font-size: 22px; }
+    .result-cols { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .rb-value { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">⚗️ Resin Mix Tool</div>
+  <h1 class="hero-title">EPOXY<span>/</span><br>CALC</h1>
+  <p class="hero-sub">Exact amounts · Every time</p>
+</section>
+
+<!-- APP -->
+<main class="container">
+
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="section-label">01 &mdash; Select Mix Ratio</div>
+    <div class="ratio-grid">
+      <button class="ratio-btn active" onclick="selectRatio(0,this)" aria-label="Ratio 10:6">
+        <div class="ratio-num">10:6</div>
+        <div class="ratio-tag">A &middot; B</div>
+      </button>
+      <button class="ratio-btn" onclick="selectRatio(1,this)" aria-label="Ratio 2:1">
+        <div class="ratio-num">2:1</div>
+        <div class="ratio-tag">A &middot; B</div>
+      </button>
+      <button class="ratio-btn" onclick="selectRatio(2,this)" aria-label="Ratio 1:1">
+        <div class="ratio-num">1:1</div>
+        <div class="ratio-tag">A &middot; B</div>
+      </button>
+    </div>
+    <div class="ratio-info" id="ratio-info">
+      <strong>10 : 6</strong> &mdash; For every 10 parts Resin (A), add 6 parts Hardener (B). Total = 16 parts.
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card">
+    <div class="section-label">02 &mdash; Enter Total Amount Needed</div>
+    <div class="input-row">
+      <div class="input-wrap">
+        <label class="input-label" for="amount">Total mix</label>
+        <input class="main-input" id="amount" type="number" min="0" step="any"
+               placeholder="e.g. 500" oninput="calculate()" autocomplete="off">
+        <span class="unit-badge" id="ubadge">g</span>
+      </div>
+      <select class="unit-select" id="unit" onchange="syncUnit();calculate()">
+        <option value="g">g</option>
+        <option value="ml">ml</option>
+        <option value="kg">kg</option>
+        <option value="oz">oz</option>
+        <option value="lb">lb</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card">
+    <div class="section-label">03 &mdash; Results</div>
+    <div id="output">
+      <div class="empty">
+        <span class="empty-icon">🧪</span>
+        Enter an amount above to see your mix
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer>Epoxy Calc &mdash; Open Source &mdash; GitHub Pages</footer>
+
+<script>
+  const RATIOS = [
+    { a:10, b:6, label:'10:6', info:'<strong>10 : 6</strong> &mdash; For every 10 parts Resin (A), add 6 parts Hardener (B). Total = 16 parts.' },
+    { a:2,  b:1, label:'2:1',  info:'<strong>2 : 1</strong> &mdash; For every 2 parts Resin (A), add 1 part Hardener (B). Total = 3 parts.' },
+    { a:1,  b:1, label:'1:1',  info:'<strong>1 : 1</strong> &mdash; Equal parts Resin (A) and Hardener (B). Total = 2 parts.' },
+  ];
+
+  let activeRatio = 0;
+
+  function selectRatio(idx, el) {
+    activeRatio = idx;
+    document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('ratio-info').innerHTML = RATIOS[idx].info;
+    calculate();
+  }
+
+  function syncUnit() {
+    document.getElementById('ubadge').textContent = document.getElementById('unit').value;
+  }
+
+  function fmt(v, u) {
+    if (v === 0) return '0';
+    // Auto-upgrade units for readability
+    if ((u==='g'||u==='ml') && v >= 1000) {
+      return parseFloat((v/1000).toFixed(4)).toString() + (u==='g'?' kg':' L');
+    }
+    return parseFloat(v.toFixed(4)).toString();
+  }
+
+  function calculate() {
+    const raw = parseFloat(document.getElementById('amount').value);
+    const u   = document.getElementById('unit').value;
+    const out = document.getElementById('output');
+
+    if (!raw || raw <= 0) {
+      out.innerHTML = `<div class="empty"><span class="empty-icon">🧪</span>Enter an amount above to see your mix</div>`;
+      return;
+    }
+
+    const r = RATIOS[activeRatio];
+    const tot = r.a + r.b;
+    const amtA = (raw * r.a) / tot;
+    const amtB = (raw * r.b) / tot;
+    const pA = ((r.a/tot)*100).toFixed(1);
+    const pB = ((r.b/tot)*100).toFixed(1);
+
+    out.innerHTML = `
+      <div class="result-cols pop">
+        <div class="result-box resin">
+          <div class="rb-label">Resin &mdash; A</div>
+          <div class="rb-part">Part ${r.a} of ${tot}</div>
+          <div class="rb-value">${fmt(amtA,u)}<span class="rb-unit">${u}</span></div>
+          <div class="rb-pct">${pA}% of mix</div>
+        </div>
+        <div class="result-box hardener">
+          <div class="rb-label">Hardener &mdash; B</div>
+          <div class="rb-part">Part ${r.b} of ${tot}</div>
+          <div class="rb-value">${fmt(amtB,u)}<span class="rb-unit">${u}</span></div>
+          <div class="rb-pct">${pB}% of mix</div>
+        </div>
+      </div>
+
+      <div class="total-row">
+        <span class="total-lbl">Total Mix</span>
+        <span class="total-val">${fmt(raw,u)}<span>${u}</span></span>
+      </div>
+
+      <div class="mix-bar-wrap">
+        <div class="mix-bar">
+          <div class="bar-resin" style="width:${pA}%"></div>
+          <div class="bar-hard"  style="width:${pB}%"></div>
+        </div>
+        <div class="bar-legend">
+          <span style="color:rgba(245,200,66,.65)">▌ Resin A &mdash; ${pA}%</span>
+          <span style="color:rgba(96,200,232,.65)">Hardener B &mdash; ${pB}% ▌</span>
+        </div>
+      </div>
+
+      <div class="mix-tip">
+        <strong>Tip:</strong> Always pour <strong>Resin (A)</strong> first, then add <strong>Hardener (B)</strong>.
+        Stir slowly for 3–5 min, scraping the sides and bottom. Avoid whipping air in.
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>
